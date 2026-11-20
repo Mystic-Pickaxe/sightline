@@ -408,7 +408,7 @@ footer{text-align:center;color:var(--mute);font-size:12px;padding:12px 0 24px}
       <div class="modes" id="modeSeg">
         <button class="mode" data-mode="dist" aria-pressed="true">
           <svg viewBox="0 0 64 44" aria-hidden="true"><line class="ic-l" x1="2" y1="40" x2="62" y2="40"/><rect class="ic-b" x="48" y="6" width="10" height="34"/><line class="ic-s" x1="8" y1="30" x2="48" y2="6"/><line class="ic-l" x1="8" y1="40" x2="8" y2="30"/><path class="ic-c" d="M8 43 H48" style="stroke-dasharray:none"/></svg>
-          <div><b>I know the distance</b><span>Most accurate. Tape how far away it is, then just aim at the top.</span></div>
+          <div><b>I know the distance</b><span>Most accurate. Tape how far away it is, then aim at the bottom and the top. Your height doesn't matter.</span></div>
         </button>
         <button class="mode" data-mode="base" aria-pressed="false">
           <svg viewBox="0 0 64 44" aria-hidden="true"><line class="ic-l" x1="2" y1="40" x2="62" y2="40"/><rect class="ic-b" x="48" y="6" width="10" height="34"/><line class="ic-s" x1="8" y1="30" x2="48" y2="6"/><line class="ic-c" x1="8" y1="30" x2="48" y2="40"/><line class="ic-l" x1="8" y1="40" x2="8" y2="30"/></svg>
@@ -464,11 +464,12 @@ footer{text-align:center;color:var(--mute);font-size:12px;padding:12px 0 24px}
         <button data-mode="wall" aria-pressed="false">On a wall</button>
       </div>
       <div class="fields">
-        <div class="field"><label for="c-h0">Eye height (EB)</label><div class="inp"><input id="c-h0" type="number" inputmode="decimal" step="0.01" value="1.5"><span>m</span></div></div>
+        <div class="field" id="c-h0Field"><label for="c-h0">Eye height (EB)</label><div class="inp"><input id="c-h0" type="number" inputmode="decimal" step="0.01" value="1.5"><span>m</span></div></div>
         <div class="field" data-cfor="base"><label for="c-dep">Angle of depression to the bottom (α)</label><div class="inp"><input id="c-dep" type="number" inputmode="decimal" step="0.1" value="12"><span>°</span></div></div>
         <div class="field" data-cfor="base"><label for="c-top">Angle of elevation to the top (θ)</label><div class="inp"><input id="c-top" type="number" inputmode="decimal" step="0.1" value="40"><span>°</span></div></div>
         <div class="field" data-cfor="dist"><label for="c-d">Distance from the building (DE)</label><div class="inp"><input id="c-d" type="number" inputmode="decimal" step="0.1" value="20"><span>m</span></div></div>
-        <div class="field" data-cfor="dist"><label for="c-th">Angle of elevation (θ)</label><div class="inp"><input id="c-th" type="number" inputmode="decimal" step="0.1" value="35"><span>°</span></div></div>
+        <div class="field" data-cfor="dist"><label for="c-ddep">Angle of depression to the bottom (α)</label><div class="inp"><input id="c-ddep" type="number" inputmode="decimal" step="0.1" value="4"><span>°</span></div></div>
+        <div class="field" data-cfor="dist"><label for="c-th">Angle of elevation to the top (θ)</label><div class="inp"><input id="c-th" type="number" inputmode="decimal" step="0.1" value="35"><span>°</span></div></div>
         <div class="field" data-cfor="pair"><label for="c-s">Distance walked back (s)</label><div class="inp"><input id="c-s" type="number" inputmode="decimal" step="0.1" value="20"><span>m</span></div></div>
         <div class="field" data-cfor="pair"><label for="c-a1">Angle from the near spot (θ₁)</label><div class="inp"><input id="c-a1" type="number" inputmode="decimal" step="0.1" value="60"><span>°</span></div></div>
         <div class="field" data-cfor="pair"><label for="c-a2">Angle from the far spot (θ₂)</label><div class="inp"><input id="c-a2" type="number" inputmode="decimal" step="0.1" value="30"><span>°</span></div></div>
@@ -691,7 +692,7 @@ $('#permHint').textContent=isIOS
 /* ---------- the three ways ---------- */
 const MODES={
   base:{steps:[{k:'dep',t:'Aim at the bottom',h:'Put the dot right where the building touches the ground, then tap.'},{k:'top',t:'Now aim at the very top',h:'Don\'t move or lift the phone, just tilt it up. Put the dot on the highest point and tap.'}]},
-  dist:{steps:[{k:'top',t:'Aim at the very top',h:'Put the dot on the highest point and tap.'}]},
+  dist:{steps:[{k:'dep',t:'Aim at the bottom',h:'Put the dot right where it touches the ground (feet, base of the building), then tap.'},{k:'top',t:'Now aim at the very top',h:'Don\'t move or lift the phone, just tilt it up. Put the dot on the highest point and tap.'}]},
   pair:{steps:[{k:'a1',t:'Spot 1: aim at the top',h:'Stand closer to the building first, then tap.'},{k:'a2',t:'Spot 2: aim at the top',h:'Walk straight back S m (stay in line with the building), then tap again.'}]},
   wall:{steps:[{k:'dep',t:'Aim at the floor by the wall',h:'Put the dot where the wall meets the floor, right below the thing.'},{k:'b1',t:'Aim at its bottom edge',h:'Tilt the phone, don\'t move it up or down. Then tap.'},{k:'t1',t:'Aim at its top edge',h:'Same spot, just tilt. Then tap.'}]},
 };
@@ -702,7 +703,7 @@ const SYM={dep:'α',top:'θ',a1:'θ₁',a2:'θ₂',b1:'θ₁',t1:'θ₂'};
 const REACH=0.3;
 function solve(mode,p){
   const T=x=>Math.tan(x*D2R),a=p.ang,h=p.h0,bad=msg=>({ok:false,msg});
-  if(!(h>=0))return bad('Fill in the eye height.');
+  if(mode!=='dist'&&!(h>=0))return bad('Fill in the eye height.');
   let f,keys;
   if(mode==='base'){
     keys=['dep','top'];
@@ -711,10 +712,13 @@ function solve(mode,p){
     if(!(a.top>-a.dep&&a.top<89.5))return bad('The top has to be higher than the bottom, and θ has to be less than 90°.');
     f=x=>{const d=h/T(x.dep);return {d,H:h+d*T(x.top)}};
   }else if(mode==='dist'){
-    keys=['top'];
+    // both angles from the same spot and a taped distance: the phone height drops out,
+    // and a tilt sensor that reads a little off shifts both angles the same way, so most of it cancels
+    keys=['dep','top'];
     if(!(p.d>0))return bad('Fill in the distance DE.');
-    if(!(a.top>-89&&a.top<89.5))return bad('The angle θ has to be less than 90°.');
-    f=x=>({d:p.d,H:h+p.d*T(x.top)});
+    if(!(a.dep>0.2&&a.dep<89))return bad('The angle of depression α has to be between 0° and 89°.');
+    if(!(a.top>-a.dep&&a.top<89.5))return bad('The top has to be higher than the bottom, and θ has to be less than 90°.');
+    f=x=>{const eb=p.d*T(x.dep);return {d:p.d,eb,H:eb+p.d*T(x.top)}};
   }else if(mode==='pair'){
     keys=['a1','a2'];
     if(!(p.s>0))return bad('Fill in how far you walked back (s).');
@@ -756,7 +760,11 @@ function solve(mode,p){
     lines.push(['In right ΔDEB','tan α = EB / DE  ⇒  DE = h / tan α',`= ${f2(h)} / tan ${f1(a.dep)}° = ${f2(h)} / ${t('dep')} = <b>${f2(r.d)} m</b>`]);
     lines.push(['In right ΔDEA','tan θ = AE / DE  ⇒  AE = DE × tan θ',`= ${f2(r.d)} × tan ${f1(a.top)}° = ${f2(r.d)} × ${t('top')} = ${f2(AE)} m`]);
   }else if(mode==='dist'){
-    lines.push(['In right ΔDEA','tan θ = AE / DE  ⇒  AE = DE × tan θ',`= ${f2(p.d)} × tan ${f1(a.top)}° = ${f2(p.d)} × ${t('top')} = ${f2(AE)} m`]);
+    const EB=r.eb,AEd=r.H-EB;
+    lines.push(['In right ΔDEB','tan α = EB / DE  ⇒  EB = DE × tan α',`= ${f2(p.d)} × tan ${f1(a.dep)}° = ${f2(p.d)} × ${t('dep')} = ${f2(EB)} m`]);
+    lines.push(['In right ΔDEA','tan θ = AE / DE  ⇒  AE = DE × tan θ',`= ${f2(p.d)} × tan ${f1(a.top)}° = ${f2(p.d)} × ${t('top')} = ${f2(AEd)} m${AEd<0?' (negative = below eye level)':''}`]);
+    lines.push(['Height','AB = AE + EB = DE (tan θ + tan α)',`= ${f2(AEd)} + ${f2(EB)} = <b>${f2(r.H)} m</b>`]);
+    return {ok:true,mode,H:r.H,d:r.d,err:Math.sqrt(v),errA:Math.sqrt(va),h0:EB,ang:a,keys,lines};
   }else{
     lines.push(['From ΔAED and ΔAEF','DE tan θ₁ = (DE + s) tan θ₂  ⇒  DE = s tan θ₂ / (tan θ₁ − tan θ₂)',`= ${f2(p.s)} × ${t('a2')} / (${t('a1')} − ${t('a2')}) = <b>${f2(r.d)} m</b>`]);
     lines.push(['In right ΔAED','AE = DE × tan θ₁',`= ${f2(r.d)} × ${t('a1')} = ${f2(AE)} m`]);
@@ -785,10 +793,11 @@ function fit(mode,p,caps,bSig){
   // caps: [{k, e (angle above level, + up), sd}]
   const names=['H','d','h','b'];if(mode==='wall')names.push('low');if(mode==='pair')names.push('s');
   const known=p.d>0,lsig=lenSig(p);
-  const priors=[['h',p.h0,lsig.h0],['b',0,bSig]];
+  const priors=[['h',p.h0,mode==='dist'?0.3:lsig.h0],['b',0,bSig]];
   if(known)priors.push(['d',p.d,lsig.d]);
   if(mode==='pair')priors.push(['s',p.s,lsig.s]);
-  const tb=solve(mode,{...p,ang:Object.fromEntries(caps.map(c=>[c.k,c.k==='dep'?-c.e:c.e])),sig:{}});
+  // starting guess only: a bottom that reads just above level (sensor offset, far away) starts at 0.3°
+  const tb=solve(mode,{...p,ang:Object.fromEntries(caps.map(c=>[c.k,c.k==='dep'?Math.max(-c.e,mode==='dist'?0.3:-c.e):c.e])),sig:{}});
   if(!tb.ok)return tb;
   let x={H:tb.H,d:tb.d,h:p.h0,b:0,low:tb.low,s:p.s};
   const zOf=(c,x)=>({'0':0,H:x.H,low:x.low,hi:x.low+x.H})[AIM[c.k].z];
@@ -841,14 +850,12 @@ function figure(sol){
     g+=`<line class="sight" x1="${x}" y1="${ey}" x2="${xo}" y2="${Y(H)}"/>`;
     g+=`<line class="post" x1="${x}" y1="${gy}" x2="${x}" y2="${ey}"/><circle cx="${x}" cy="${ey}" r="3.5" fill="var(--text)"/>`;
   }
-  if(mode==='base')g+=`<line class="sight2" x1="${near}" y1="${ey}" x2="${xo}" y2="${gy}"/>`;
+  if(mode==='base'||mode==='dist')g+=`<line class="sight2" x1="${near}" y1="${ey}" x2="${xo}" y2="${gy}"/>`;
   const arc=(x,ang,r,cls)=>{const a=ang*D2R,ex=x+r*Math.cos(a),eyy=ey-r*Math.sin(a);return `<path class="arc" style="stroke:var(--${cls})" d="M${x+r} ${ey} A${r} ${r} 0 0 ${ang>0?0:1} ${ex} ${eyy}"/>`};
   const A=sol.ang,pt=(x,y,t,anchor='end')=>`<text class="pt" x="${x}" y="${y}" text-anchor="${anchor}">${t}</text>`;
-  if(mode==='base'){
+  if(mode==='base'||mode==='dist'){
     g+=arc(near,A.top,30,'el')+`<text class="tA" x="${near+34}" y="${ey-8}">θ ${f1(A.top)}°</text>`;
     g+=arc(near,-A.dep,22,'dep')+`<text class="tC" x="${near+26}" y="${ey+16}">α ${f1(A.dep)}°</text>`;
-  }else if(mode==='dist'){
-    g+=arc(near,A.top,30,'el')+`<text class="tA" x="${near+34}" y="${ey-8}">θ ${f1(A.top)}°</text>`;
   }else{
     g+=arc(X(0),A.a2,30,'el')+`<text class="tA" x="${X(0)+4}" y="${ey+16}">θ₂ ${f1(A.a2)}°</text>`;
     g+=arc(near,A.a1,22,'el')+`<text class="tA" x="${near+4}" y="${ey+16}">θ₁ ${f1(A.a1)}°</text>`;
@@ -894,7 +901,7 @@ function renderSolution(el,sol,kind){
     <div><div class="eyebrow">${wall?'Height of the object (PQ)':'Height of the building (AB)'}</div>
     <div class="res-head"><div class="res-big num">${big}</div>${sol.err?`<div class="res-err">${pm}</div>`:''}</div></div>
     ${far}
-    <div class="meta"><div><span>Distance DE</span><b>${f2(sol.d)} m</b></div>${wall?`<div><span>Bottom above floor</span><b>${f2(sol.low)} m</b></div>`:''}<div><span>Eye height h</span><b>${f2(sol.h0)} m</b></div>${angs}</div>
+    <div class="meta"><div><span>Distance DE</span><b>${f2(sol.d)} m</b></div>${wall?`<div><span>Bottom above floor</span><b>${f2(sol.low)} m</b></div>`:''}<div><span>${sol.mode==='dist'?'Phone height (from α)':'Eye height h'}</span><b>${f2(sol.h0)} m</b></div>${angs}</div>
     ${figure(sol)}
     <details class="workbox"><summary>Show working</summary>
     <ol class="work">${sol.lines.map(([w,a,b])=>`<li><div><div class="w-t">${w},</div><div class="f">${a}</div><div class="s">${b}</div></div></li>`).join('')}</ol>
@@ -916,8 +923,9 @@ $$('#cmodeSeg button').forEach(b=>b.onclick=()=>{cmode=b.dataset.mode;$$('#cmode
 $$('[data-view="calc"] input').forEach(i=>i.addEventListener('input',calc));
 function calc(){
   $$('[data-cfor]').forEach(e=>e.hidden=e.dataset.cfor!==cmode);
+  $('#c-h0Field').hidden=cmode==='dist';
   const n=id=>parseFloat($('#'+id).value);
-  const sol=solve(cmode,{h0:n('c-h0'),d:cmode==='wall'?n('c-wd'):n('c-d'),s:n('c-s'),ang:{dep:n('c-dep'),top:cmode==='dist'?n('c-th'):n('c-top'),a1:n('c-a1'),a2:n('c-a2'),b1:n('c-wb'),t1:n('c-wt')},sig:{dep:1,top:1,a1:1,a2:1,b1:1,t1:1}});
+  const sol=solve(cmode,{h0:n('c-h0'),d:cmode==='wall'?n('c-wd'):n('c-d'),s:n('c-s'),ang:{dep:cmode==='dist'?n('c-ddep'):n('c-dep'),top:cmode==='dist'?n('c-th'):n('c-top'),a1:n('c-a1'),a2:n('c-a2'),b1:n('c-wb'),t1:n('c-wt')},sig:{dep:1,top:1,a1:1,a2:1,b1:1,t1:1}});
   renderSolution($('#calcOut'),sol,'manual');
 }
 
@@ -1190,6 +1198,11 @@ const len=(v,cm)=>cm?`${(v*100).toFixed(1)} cm`:`${f2(v)} m`;
 function liveGuide(e){
   const st=steps()[cam.step];if(!st||e==null)return null;
   const k=st.k,p=cam.params,cap=cam.cap,floor=calibrated()?0.25:1,v=k==='dep'?-e:e,G=(t,c)=>({t,c});
+  if(k==='dep'&&mode==='dist'){
+    if(!(v>-2))return G('▼ Aim down at the bottom','warn');
+    if(v<3)return G('It\'s far, the bottom is nearly level. Walk closer if you can','warn');
+    return v>50?G('Too close, step back a little','warn'):G(`If the dot is on the bottom: phone is ${f2(p.d*Math.tan(v*D2R))} m up`,'good');
+  }
   if(k==='dep'){
     if(!(v>0.5))return G(`▼ Aim down at ${mode==='wall'?'the floor by the wall':'the bottom'}`,'warn');
     const d=p.h0/Math.tan(v*D2R),lo=mode==='wall'?20:15,hi=mode==='wall'?55:50;
@@ -1207,7 +1220,7 @@ function liveGuide(e){
     return rel<0.05?G(`${t}\nGood spot ✓`,'good'):G(`${t}\n± is big. ${!calibrated()?'Calibrate first, it shrinks the ± a lot':rel>0.15?'Change where you stand':'Hold steadier, elbows tucked in'}`,'warn');
   };
   if(mode==='base'||mode==='dist'){
-    if(mode==='base'&&!(v>-cap.dep.v+0.5))return G('▲ Tilt up to the top. Same spot, same height','warn');
+    if(!(v>-cap.dep.v+0.5))return G('▲ Tilt up to the top. Same spot, same height','warn');
     if(!(v>-89))return G('▲ Tilt up to the top','warn');
     return preview(solve(mode,{...p,ang,sig,sigLen:lenSig(p)}),false,v>72?'Very steep, step back for a better answer':'');
   }
@@ -1265,7 +1278,7 @@ $('#shoot').onclick=async()=>{
   const m=trimmedMean(best.xs),sd=best.sd;
   if(sd>0.5)return flash(`Too shaky (±${f1(sd)}°). Tuck your elbows in and try again.`);
   const st=steps()[cam.step],val=st.k==='dep'?-m:m;
-  if(st.k==='dep'&&!(val>0.2))return flash('That\'s above eye level. The floor/bottom should be lower than your eye, so aim lower.');
+  if(st.k==='dep'&&!(val>(mode==='dist'?-2:0.2)))return flash('That\'s above eye level. The floor/bottom should be lower than your eye, so aim lower.');
   if(st.k==='top'&&mode==='base'&&!(m>-cam.cap.dep.v))return flash('The top has to be higher than the bottom. Aim at the top.');
   if((st.k==='a1'||st.k==='a2')&&!(val>0))return flash('Aim up at the top of the building.');
   if(st.k==='a2'&&!(val<cam.cap.a1.v))return flash('This angle should be smaller than the first one. Did you walk back, away from the building?');
